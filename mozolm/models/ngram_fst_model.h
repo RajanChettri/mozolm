@@ -45,8 +45,15 @@ class NGramFstModel : public LanguageModel {
   // Returns underlying FST, which must be initialized.
   const fst::StdVectorFst &fst() const { return *fst_; }
 
+  fst::StdArc::Label oov_label() const { return oov_label_; }
+
  protected:
   NGramFstModel() = default;
+
+  // Returns the next state reached by arc labeled with label from state s.
+  // If the label is out-of-vocabulary, it will return the unigram state.
+  fst::StdArc::StateId NextModelState(fst::StdArc::StateId s,
+                                          fst::StdArc::Label label);
 
   // Language model represented by vector FST.
   std::unique_ptr<const fst::StdVectorFst> fst_;
@@ -56,6 +63,11 @@ class NGramFstModel : public LanguageModel {
 
   // Label for the unknown symbol, if any.
   fst::StdArc::Label oov_label_ = fst::kNoSymbol;
+
+  // Checks the current state and sets it to the unigram state if less than
+  // zero.
+  fst::StdArc::StateId CheckCurrentState(
+      fst::StdArc::StateId state) const;
 
  private:
   // Performs model sanity check.
